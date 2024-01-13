@@ -16,6 +16,7 @@ There are many reasons why one to use virtual machines:
 
 * Virtual machines allow you to scale your operations, essentially giving you access to infinitely many individual
     computers
+
 * Virtual machines allow you to use large scale hardware. For example if you are developing an deep learning model on
     your laptop and want to know the inference time for a specific hardware configuration, you can just create a virtual
     machine with those specs and run your model.
@@ -91,7 +92,11 @@ We are now going to start actually using the cloud.
         gcloud compute instances create <instance_name> \
             --zone=<zone> \
             --image-family=<image-family> \
-            --image-project=deeplearning-platform-release
+            --image-project=deeplearning-platform-release \
+            # add these arguments if you want to run on GPU
+            --accelerator="type=nvidia-tesla-K80,count=1" \
+            --maintenance-policy TERMINATE \
+            --metadata="install-nvidia-driver=True" \
         ```
 
         You can find more info [here](https://cloud.google.com/deep-learning-vm/docs/pytorch_start_instance) on what
@@ -114,6 +119,17 @@ We are now going to start actually using the cloud.
     </figure>
 
     Try out launching this and run some of the commands from the previous exercises.
+
+!!! warning "Stopping VMs"
+
+    If you are not careful you can end up wasting a lot of credits on virtual machines that you are not using. VMs are
+    charged by the minute, so even if you are not using them you are still paying for them. Therefore, it is important
+    that you remember to stop your VMs when you are not using them. You can do this by either clicking the `Stop` button
+    in the VM overview page or by running the following command:
+
+    ```bash
+    gcloud compute instances stop <instance-name>
+    ```
 
 ## Data storage
 Another big part of cloud computing is storage of data. There are many reason that you want to store your
@@ -477,12 +493,17 @@ parts of our pipeline.
         workerPoolSpecs:
             machineSpec:
                 machineType: n1-standard-8
-                acceleratorType: NVIDIA_TESLA_T4
+                acceleratorType: NVIDIA_TESLA_T4 #(1)!
                 acceleratorCount: 1
             replicaCount: 1
             containerSpec:
                 imageUri: gcr.io/<project-id>/<docker-img>
         ```
+
+        1. In this case we are requesting a Nvidia Tesla T4 GPU. This will only work if you have quota for allocating
+            this type of GPU in the Vertex AI service. You can check how to request quota in the last exercise of the
+            [previous module](cloud_setup.md). Remember that it is not enough to just request quota for the GPU, the
+            request need to by approved by Google before you can use it.
 
         you can read more about the configuration formatting
         [here](https://cloud.google.com/vertex-ai/docs/reference/rest/v1/CustomJobSpec)
